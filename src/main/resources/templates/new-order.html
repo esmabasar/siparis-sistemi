@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Yeni Sipariş</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin-top: 8px; }
+        input, select { padding: 4px; width: 300px; }
+        button { margin-top: 12px; padding: 6px 12px; }
+        a { text-decoration: none; color: #007bff; }
+    </style>
+</head>
+<body>
+
+<h1>Yeni Sipariş</h1>
+
+<form action="/new-order" method="post">
+    <h3>Müşteri Bilgileri</h3>
+    <label>İsim:
+        <input type="text" name="customerName" required>
+    </label>
+    <label>E-posta:
+        <input type="email" name="customerEmail">
+    </label>
+    <label>Adres:
+        <input type="text" name="customerAddress" required>
+    </label>
+
+    <h3>Ürün Bilgisi (tek ürün)</h3>
+
+    <!-- ÜRÜN SEÇİMİ ARTIK DROPDOWN -->
+    <label>Ürün Seç:
+        <select name="productName" required>
+            <option value="" disabled selected>Ürün seçiniz</option>
+            <option th:each="entry : ${menu}"
+                    th:value="${entry.key}"
+                    th:text="${entry.key + ' - ' + entry.value + ' TL'}">
+            </option>
+        </select>
+    </label>
+
+    <label>Adet:
+        <input type="number" name="quantity" min="1" value="1" required>
+    </label>
+
+    <button type="submit">Siparişi Oluştur</button>
+</form>
+
+<p>
+    <a href="/orders-page">← Sipariş listesine dön</a>
+</p>
+
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sipariş Listesi</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { margin-bottom: 10px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f5f5f5; }
+        .status-form { display: inline; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; }
+        .filter { margin-left: 10px; }
+        a.button {
+            text-decoration: none;
+            background: #4caf50;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="top-bar">
+    <h1>Siparişler</h1>
+    <div>
+        <label>Duruma göre filtrele:</label>
+        <form th:action="@{/orders-page}" method="get" class="filter">
+            <select name="status">
+                <option th:selected="${selectedStatus == null}" value="">Hepsi</option>
+                <option th:each="st : ${statuses}"
+                        th:value="${st}"
+                        th:text="${st}"
+                        th:selected="${selectedStatus == st}">
+                </option>
+            </select>
+            <button type="submit">Filtrele</button>
+        </form>
+    </div>
+    <a href="/new-order" class="button">Yeni Sipariş</a>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Müşteri</th>
+        <th>Adres</th>
+        <th>Durum</th>
+        <th>Toplam Tutar</th>
+        <th>Ürünler</th>
+        <th>Durum Güncelle</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="order : ${orders}">
+        <td th:text="${order.id}"></td>
+        <td th:text="${order.customerName}"></td>
+        <td th:text="${order.customerAddress}"></td>
+        <td th:text="${order.status}"></td>
+        <td th:text="${order.totalPrice}"></td>
+        <td>
+            <ul>
+                <li th:each="item : ${order.items}">
+                    <span th:text="${item.productName}"></span>
+                    (<span th:text="${item.quantity}"></span> x
+                    <span th:text="${item.unitPrice}"></span>)
+                </li>
+            </ul>
+        </td>
+        <td>
+            <form th:action="@{'/orders-page/' + ${order.id} + '/status'}"
+                  method="post"
+                  class="status-form">
+                <select name="status">
+                    <option th:each="st : ${statuses}"
+                            th:value="${st}"
+                            th:text="${st}"
+                            th:selected="${st == order.status}">
+                    </option>
+                </select>
+                <button type="submit">Kaydet</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(orders)}">
+        <td colspan="7">Henüz hiç sipariş yok.</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
