@@ -17,6 +17,9 @@ public class Order {
     private String customerEmail;
     private String customerAddress;
 
+    // ⭐ Yeni eklenen özellik: müşteri özel notu
+    private String note;
+
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
@@ -42,9 +45,23 @@ public class Order {
         updatedAt = LocalDateTime.now();
     }
 
-    // -------------------------
+    // ⭐ Sipariş toplamını hesaplama
+    public void calculateTotalPrice() {
+        if (items == null || items.isEmpty()) {
+            this.totalPrice = BigDecimal.ZERO;
+            return;
+        }
+
+        BigDecimal sum = BigDecimal.ZERO;
+
+        for (OrderItem item : items) {
+            sum = sum.add(item.getLineTotal());
+        }
+
+        this.totalPrice = sum;
+    }
+
     // GETTERS & SETTERS
-    // -------------------------
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -57,6 +74,9 @@ public class Order {
 
     public String getCustomerAddress() { return customerAddress; }
     public void setCustomerAddress(String customerAddress) { this.customerAddress = customerAddress; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
     public OrderStatus getStatus() { return status; }
     public void setStatus(OrderStatus status) { this.status = status; }

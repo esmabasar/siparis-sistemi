@@ -3,14 +3,25 @@ package com.example.siparis.dto;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class CreateOrderRequest {
+public class OrderSummary {
 
+    private Long id;
     private String customerName;
     private String customerEmail;
     private String customerAddress;
-    private List<OrderItemRequest> items;
+    private String note;
+    private BigDecimal totalPrice;
 
-    // Getters - Setters
+    private List<OrderItemResponse> items;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getCustomerName() {
         return customerName;
     }
@@ -35,15 +46,6 @@ public class CreateOrderRequest {
         this.customerAddress = customerAddress;
     }
 
-    public List<OrderItemRequest> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItemRequest> items) {
-        this.items = items;
-    }
-    private String note;
-
     public String getNote() {
         return note;
     }
@@ -52,4 +54,19 @@ public class CreateOrderRequest {
         this.note = note;
     }
 
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public List<OrderItemResponse> getItems() {
+        return items;
+    }
+
+    public void setItems(List<OrderItemResponse> items) {
+        this.items = items;
+    }
 }

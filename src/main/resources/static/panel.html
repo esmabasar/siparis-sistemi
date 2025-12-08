@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sipariş Sistemi Paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet">
+
+    <style>
+        body { background: #f5f5f5; }
+        .navbar-brand { font-weight: 600; }
+        .card { border-radius: 12px; }
+        .badge-status { font-size: 0.75rem; }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <a class="navbar-brand">Sipariş Sistemi Paneli</a>
+
+        <!-- Yeni Sipariş Butonu -->
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newOrderModal">
+            + Yeni Sipariş
+        </button>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="row">
+        <!-- Sol taraf -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between">
+                    <span class="fw-semibold">Tüm Siparişler</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadOrders()">Yenile</button>
+                </div>
+
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Müşteri</th>
+                            <th>Toplam</th>
+                            <th>Durum</th>
+                            <th>Değiştir</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody id="orders-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ taraf -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold">Sipariş Özeti</div>
+                <div class="card-body" id="order-summary">
+                    <p class="text-muted">Sipariş seçiniz.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Yeni Sipariş Modal -->
+<div class="modal fade" id="newOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Yeni Sipariş</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="mb-3">
+                    <label class="form-label">Müşteri Adı</label>
+                    <input class="form-control" id="customerName">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">E-posta</label>
+                    <input class="form-control" id="customerEmail">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Adres</label>
+                    <textarea class="form-control" id="customerAddress"></textarea>
+                </div>
+
+                <hr>
+                <h6>Ürünler</h6>
+
+                <div id="productList">
+                    <!-- İlk ürün satırı -->
+                    <div class="row g-2 mb-2 product-row">
+                        <div class="col">
+                            <select class="form-select" data-name="productName" onchange="onProductChange(this)">
+                                <option value="">Ürün seçiniz</option>
+                            </select>
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control" data-name="quantity" type="number" placeholder="Adet">
+                        </div>
+                        <div class="col-3">
+                            <input class="form-control" data-name="unitPrice" type="number" placeholder="Fiyat" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-sm btn-outline-primary mt-1" onclick="addProductRow()">+ Ürün Ekle</button>
+
+                <div class="mt-3">
+                    <label class="form-label">Özel Not</label>
+                    <textarea class="form-control" id="note"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button class="btn btn-primary" onclick="createOrder()">Kaydet</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    let menuItems = [];
+
+    // SAYFA AÇILDIĞINDA
+    document.addEventListener("DOMContentLoaded", () => {
+        loadMenu();
+        loadOrders();
+    });
+
+    // MODAL AÇILIRKEN FORMU OTOMATİK TEMİZLE ❤️
+    document.getElementById("newOrderModal")
+        .addEventListener("show.bs.modal", resetOrderForm);
+
+
+    /* -------------------------- FORM RESET -------------------------- */
+
+    function resetOrderForm() {
+        document.getElementById("customerName").value = "";
+        document.getElementById("customerEmail").value = "";
+        document.getElementById("customerAddress").value = "";
+        document.getElementById("note").value = "";
+
+        // Ürün listesi tamamen sıfırlanır
+        const list = document.getElementById("productList");
+        list.innerHTML = `
+            <div class="row g-2 mb-2 product-row">
+                <div class="col">
+                    <select class="form-select" data-name="productName" onchange="onProductChange(this)">
+                        <option value="">Ürün seçiniz</option>
+                    </select>
+                </div>
+                <div class="col-3">
+                    <input class="form-control" data-name="quantity" type="number" placeholder="Adet">
+                </div>
+                <div class="col-3">
+                    <input class="form-control" data-name="unitPrice" type="number" placeholder="Fiyat" readonly>
+                </div>
+            </div>
+        `;
+
+        // Menü yeniden yüklenir
+        fillSelectOptions(list.querySelector("select"));
+    }
+
+
+    /* -------------------------- MENÜ -------------------------- */
+
+    function loadMenu() {
+        fetch("/api/menu")
+            .then(r => r.json())
+            .then(data => {
+                menuItems = data || [];
+                fillSelectOptions(
+                    document.querySelector(".product-row select[data-name='productName']")
+                );
+            });
+    }
+
+    function fillSelectOptions(select) {
+        select.innerHTML = '<option value="">Ürün seçiniz</option>';
+        menuItems.forEach(m =>
+            select.innerHTML += `<option value="${m.name}">${m.name} (${m.price} ₺)</option>`
+        );
+    }
+
+    function onProductChange(sel) {
+        const row = sel.closest(".product-row");
+        const priceInput = row.querySelector('[data-name="unitPrice"]');
+        const found = menuItems.find(m => m.name === sel.value);
+        priceInput.value = found ? found.price : "";
+    }
+
+
+    /* -------------------------- SİPARİŞ LISTESİ -------------------------- */
+
+    function loadOrders() {
+        fetch("/api/orders")
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.getElementById("orders-body");
+                tbody.innerHTML = "";
+
+                data.forEach(o => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${o.id}</td>
+                            <td>${o.customerName ?? ""}</td>
+                            <td>${o.totalPrice} ₺</td>
+                            <td>${renderStatusBadge(o.status)}</td>
+
+                            <td>
+                                <select class="form-select form-select-sm"
+                                        onchange="updateStatus(${o.id}, this)">
+                                    <option value="NEW" ${o.status==='NEW'?'selected':''}>Yeni</option>
+                                    <option value="PREPARING" ${o.status==='PREPARING'?'selected':''}>Hazırlanıyor</option>
+                                    <option value="SHIPPED" ${o.status==='SHIPPED'?'selected':''}>Kargoda</option>
+                                    <option value="DELIVERED" ${o.status==='DELIVERED'?'selected':''}>Teslim</option>
+                                    <option value="CANCELED" ${o.status==='CANCELED'?'selected':''}>İptal</option>
+                                </select>
+                            </td>
+
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="loadSummary(${o.id})">
+                                    Detay
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+    }
+
+    function renderStatusBadge(status) {
+        const map = {
+            NEW: "info",
+            PREPARING: "warning",
+            SHIPPED: "primary",
+            DELIVERED: "success",
+            CANCELED: "danger"
+        };
+        return `<span class="badge bg-${map[status] || 'secondary'}">${status}</span>`;
+    }
+
+
+    /* -------------------------- SİPARİŞ ÖZETİ -------------------------- */
+
+    function loadSummary(id) {
+        fetch(`/api/orders/${id}/summary`)
+            .then(r => r.json())
+            .then(o => {
+                document.getElementById("order-summary").innerHTML = `
+                    <h5>#${o.id} – ${o.customerName}</h5>
+                    <p><strong>E-posta:</strong> ${o.customerEmail}</p>
+                    <p><strong>Adres:</strong> ${o.customerAddress}</p>
+                    <p><strong>Not:</strong> ${o.note}</p>
+
+                    <h6 class="mt-3">Ürünler</h6>
+                    <ul class="list-group mb-3">
+                        ${o.items.map(i => `
+                            <li class="list-group-item d-flex justify-content-between">
+                                <div>
+                                    <strong>${i.productName}</strong>
+                                    <div class="text-muted small">${i.quantity} x ${i.unitPrice} ₺</div>
+                                </div>
+                                <span>${i.lineTotal} ₺</span>
+                            </li>
+                        `).join("")}
+                    </ul>
+
+                    <p><strong>Toplam:</strong> ${o.totalPrice} ₺</p>
+                `;
+            });
+    }
+
+
+    /* -------------------------- YENİ SİPARİŞ -------------------------- */
+
+    function addProductRow() {
+        const row = document.querySelector(".product-row").cloneNode(true);
+        row.querySelectorAll("input").forEach(i => i.value = "");
+        fillSelectOptions(row.querySelector("select"));
+        document.getElementById("productList").appendChild(row);
+    }
+
+    function createOrder() {
+        const items = [];
+        document.querySelectorAll(".product-row").forEach(r => {
+            const name = r.querySelector('[data-name="productName"]').value;
+            const qty = r.querySelector('[data-name="quantity"]').value;
+            const price = r.querySelector('[data-name="unitPrice"]').value;
+
+            if (name && qty && price) {
+                items.push({ productName: name, quantity: Number(qty), unitPrice: Number(price) });
+            }
+        });
+
+        fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                customerName: document.getElementById("customerName").value,
+                customerEmail: document.getElementById("customerEmail").value,
+                customerAddress: document.getElementById("customerAddress").value,
+                note: document.getElementById("note").value,
+                items: items
+            })
+        }).then(res => {
+            if (!res.ok) throw new Error();
+            loadOrders();
+            bootstrap.Modal.getInstance(document.getElementById("newOrderModal")).hide();
+        });
+    }
+
+    /* -------------------------- DURUM GÜNCELLE --------------------------- */
+
+    function updateStatus(id, sel) {
+        fetch(`/api/orders/${id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: sel.value })
+        }).then(() => loadOrders());
+    }
+
+</script>
+
+</body>
+</html>

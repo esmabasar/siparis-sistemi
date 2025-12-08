@@ -1,8 +1,11 @@
 package com.example.siparis.service;
 
+
 import com.example.siparis.dto.CreateOrderRequest;
 import com.example.siparis.dto.OrderItemRequest;
 import com.example.siparis.dto.UpdateOrderStatusRequest;
+import com.example.siparis.dto.OrderSummary;      // ⭐ BUNU EKLE
+import com.example.siparis.dto.OrderItemResponse; // ⭐ BUNU EKLE
 import com.example.siparis.entity.Order;
 import com.example.siparis.entity.OrderItem;
 import com.example.siparis.entity.OrderStatus;
@@ -10,9 +13,9 @@ import com.example.siparis.repository.OrderItemRepository;
 import com.example.siparis.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Service
 public class OrderService {
@@ -27,37 +30,72 @@ public class OrderService {
     }
 
     public Order createOrder(CreateOrderRequest request) {
+
+        // ⭐ 1) Order oluştur
         Order order = new Order();
         order.setCustomerName(request.getCustomerName());
         order.setCustomerEmail(request.getCustomerEmail());
         order.setCustomerAddress(request.getCustomerAddress());
         order.setStatus(OrderStatus.NEW);
 
+        // ⭐ 2) Müşteri özel notu EKLENDİ
+        order.setNote(request.getNote());
+
+        // ⭐ 3) Item listesi oluştur
         List<OrderItem> items = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
 
         if (request.getItems() != null) {
             for (OrderItemRequest itemRequest : request.getItems()) {
+
                 OrderItem item = new OrderItem();
                 item.setProductName(itemRequest.getProductName());
                 item.setQuantity(itemRequest.getQuantity());
                 item.setUnitPrice(itemRequest.getUnitPrice());
+
+                // Order ile ilişkiyi kur
                 item.setOrder(order);
 
                 items.add(item);
-
-                BigDecimal lineTotal = itemRequest.getUnitPrice()
-                        .multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
-                total = total.add(lineTotal);
             }
         }
 
+        // Order içine set et
         order.setItems(items);
-        order.setTotalPrice(total);
 
-        // order kaydedilince item'lar da cascade ile kaydolacak
+        // ⭐ 4) Total fiyatı hesapla
+        order.calculateTotalPrice();
+
+        // ⭐ 5) Order kaydedilince item'lar otomatik kaydolacak (cascade ALL)
         return orderRepository.save(order);
     }
+    public OrderSummary getOrderSummary(Long id) {
+        Order order = getOrder(id); // ⭐ GEREKLİ SATIR
+
+        OrderSummary summary = new OrderSummary();
+        summary.setId(order.getId());
+        summary.setCustomerName(order.getCustomerName());
+        summary.setCustomerEmail(order.getCustomerEmail());
+        summary.setCustomerAddress(order.getCustomerAddress());
+        summary.setNote(order.getNote());
+        summary.setTotalPrice(order.getTotalPrice());
+
+        List<OrderItemResponse> itemResponses = new ArrayList<>();
+
+        for (OrderItem item : order.getItems()) {
+            OrderItemResponse i = new OrderItemResponse();
+            i.setProductName(item.getProductName());
+            i.setQuantity(item.getQuantity());
+            i.setUnitPrice(item.getUnitPrice());
+            i.setLineTotal(item.getLineTotal());
+
+            itemResponses.add(i);
+        }
+
+        summary.setItems(itemResponses);
+
+        return summary;
+    }
+
 
     public List<Order> getAllOrders(OrderStatus status) {
         if (status != null) {

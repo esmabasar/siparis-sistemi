@@ -1,4 +1,5 @@
 package com.example.siparis.entity;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -14,14 +15,22 @@ public class OrderItem {
     private int quantity;
     private BigDecimal unitPrice;
 
-
     @ManyToOne
     @JoinColumn(name = "order_id")
     @JsonIgnore
     private Order order;
 
+    // Line total (hesaplama için)
+    @Transient
+    public BigDecimal getLineTotal() {
+        if (unitPrice == null) {
+            return BigDecimal.ZERO;
+        }
+        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
 
-    // Getters and setters
+    // GETTERS - SETTERS
+
     public Long getId() {
         return id;
     }
